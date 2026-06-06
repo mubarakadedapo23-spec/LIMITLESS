@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>Game Dev AI — LIMITLESS</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Syne:wght@700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{--bg:#030308;--bg2:#06060e;--surface:#0d0d1a;--surface2:#111120;--border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.12);--text:#e8e8f4;--muted:#555570;--cyan:#00e5ff;--purple:#a855f7;--pink:#f472b6;--green:#22d3a0;--orange:#fb923c;--red:#f87171;--gold:#fbbf24;}
+html,body{height:100%;overflow:hidden;}
+body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;display:flex;flex-direction:column;}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;background-image:linear-gradient(rgba(0,229,255,0.018) 1px,transparent 1px),linear-gradient(90deg,rgba(0,229,255,0.018) 1px,transparent 1px);background-size:44px 44px;}
+.topbar{flex-shrink:0;display:flex;align-items:center;padding:14px 20px;gap:12px;border-bottom:1px solid var(--border);background:rgba(3,3,8,0.9);backdrop-filter:blur(20px);position:relative;z-index:20;}
+.topbar-logo{font-family:'Syne',sans-serif;font-size:0.9rem;font-weight:800;letter-spacing:0.2em;background:linear-gradient(90deg,var(--cyan),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.topbar-badge{font-size:0.55rem;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:var(--gold);border:1px solid rgba(251,191,36,0.3);padding:2px 8px;border-radius:4px;}
+.back-btn{margin-left:auto;background:rgba(255,255,255,0.04);border:1px solid var(--border);color:var(--muted);font-size:0.78rem;font-weight:600;padding:6px 14px;border-radius:8px;cursor:pointer;text-decoration:none;transition:all 0.18s;font-family:'Inter',sans-serif;}
+.back-btn:hover{color:var(--text);}
+.main{flex:1;display:flex;overflow:hidden;position:relative;z-index:10;}
+.sidebar{width:260px;flex-shrink:0;background:var(--bg2);border-right:1px solid var(--border);overflow-y:auto;padding:16px 10px;}
+.sidebar::-webkit-scrollbar{width:2px;}
+.sidebar::-webkit-scrollbar-thumb{background:var(--border2);}
+.sidebar-section{margin-bottom:20px;}
+.sidebar-section-title{font-size:0.55rem;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:var(--muted);padding:0 8px;margin-bottom:8px;display:flex;align-items:center;gap:6px;}
+.sidebar-section-title::before{content:'';width:4px;height:4px;border-radius:50%;background:currentColor;flex-shrink:0;}
+.mode-btn{display:flex;align-items:flex-start;gap:10px;width:100%;padding:10px;background:none;border:1px solid transparent;border-radius:9px;cursor:pointer;color:var(--muted);font-family:'Inter',sans-serif;font-size:0.78rem;font-weight:500;transition:all 0.15s;text-align:left;line-height:1.3;}
+.mode-btn:hover{background:rgba(255,255,255,0.04);color:var(--text);}
+.mode-btn.active{background:rgba(0,229,255,0.08);color:var(--cyan);border-color:rgba(0,229,255,0.15);}
+.mode-icon{font-size:1rem;flex-shrink:0;margin-top:1px;}
+.mode-name{font-weight:600;margin-bottom:2px;}
+.mode-desc{font-size:0.68rem;color:var(--muted);line-height:1.3;}
+.mode-btn.active .mode-desc{color:rgba(0,229,255,0.6);}
+.content{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+.mode-header{flex-shrink:0;padding:20px 24px;border-bottom:1px solid var(--border);background:rgba(3,3,8,0.5);}
+.mode-header-top{display:flex;align-items:center;gap:12px;margin-bottom:6px;}
+.mode-header-icon{font-size:1.5rem;}
+.mode-header-title{font-family:'Syne',sans-serif;font-size:1.1rem;font-weight:800;}
+.mode-header-badge{font-size:0.55rem;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;padding:3px 10px;border-radius:100px;}
+.mode-header-desc{font-size:0.82rem;color:var(--muted);line-height:1.6;}
+.result-scroll{flex:1;overflow-y:auto;padding:24px;}
+.result-scroll::-webkit-scrollbar{width:3px;}
+.result-scroll::-webkit-scrollbar-thumb{background:var(--border2);}
+.empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;text-align:center;padding:40px;}
+.empty-icon{font-size:3rem;margin-bottom:16px;opacity:0.5;}
+.empty-title{font-family:'Syne',sans-serif;font-size:1rem;font-weight:700;margin-bottom:8px;color:var(--muted);}
+.empty-desc{font-size:0.82rem;color:var(--muted);max-width:300px;line-height:1.6;}
+.result-card{background:var(--surface);border:1px solid var(--border2);border-radius:14px;padding:24px;margin-bottom:16px;animation:fadeUp 0.3s ease both;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+.result-label{font-size:0.58rem;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:var(--muted);margin-bottom:12px;}
+.result-text{font-size:0.88rem;line-height:1.78;color:var(--text);}
+.result-text h1,.result-text h2,.result-text h3{font-family:'Syne',sans-serif;font-weight:700;margin:16px 0 8px;}
+.result-text h1{font-size:1.1rem;color:var(--cyan);}
+.result-text h2{font-size:0.95rem;}
+.result-text h3{font-size:0.88rem;}
+.result-text strong{color:var(--cyan);font-weight:600;}
+.result-text ul,.result-text ol{padding-left:18px;margin:8px 0;}
+.result-text li{margin:4px 0;line-height:1.65;}
+.result-text li::marker{color:var(--cyan);}
+.result-text code{font-family:'JetBrains Mono',monospace;font-size:0.78em;background:rgba(0,229,255,0.07);border:1px solid rgba(0,229,255,0.15);padding:2px 6px;border-radius:4px;color:var(--cyan);}
+.result-text pre{background:var(--surface2);border:1px solid var(--border2);font-family:'JetBrains Mono',monospace;font-size:0.78rem;line-height:1.7;padding:16px;border-radius:10px;overflow-x:auto;margin:10px 0;}
+.result-text pre code{background:none;border:none;padding:0;color:#b8c4ff;}
+.copy-result-btn{display:inline-flex;align-items:center;gap:6px;background:rgba(0,229,255,0.08);border:1px solid rgba(0,229,255,0.2);color:var(--cyan);font-size:0.65rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;padding:6px 14px;border-radius:6px;cursor:pointer;font-family:'Inter',sans-serif;transition:all 0.15s;margin-top:16px;}
+.input-zone{flex-shrink:0;border-top:1px solid var(--border);background:rgba(3,3,8,0.9);backdrop-filter:blur(20px);padding:16px 24px 20px;}
+.input-tabs{display:flex;gap:8px;margin-bottom:12px;}
+.input-tab{font-size:0.65rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);background:none;border:1px solid var(--border);padding:5px 14px;border-radius:6px;cursor:pointer;transition:all 0.15s;font-family:'Inter',sans-serif;}
+.input-tab.active{background:rgba(0,229,255,0.08);border-color:rgba(0,229,255,0.25);color:var(--cyan);}
+.input-panel{display:none;}
+.input-panel.active{display:block;}
+textarea.game-input{width:100%;background:var(--surface);border:1px solid var(--border2);border-radius:12px;color:var(--text);font-family:'Inter',sans-serif;font-size:0.88rem;line-height:1.6;padding:14px 16px;resize:none;outline:none;transition:border-color 0.2s;height:90px;}
+textarea.game-input:focus{border-color:rgba(0,229,255,0.3);}
+textarea.game-input::placeholder{color:var(--muted);}
+textarea.code-font{font-family:'JetBrains Mono',monospace;font-size:0.8rem;height:110px;}
+.file-upload-area{border:2px dashed var(--border2);border-radius:12px;padding:24px;text-align:center;cursor:pointer;transition:all 0.2s;}
+.file-upload-area:hover,.file-upload-area.has-file{border-color:rgba(0,229,255,0.3);background:rgba(0,229,255,0.03);}
+.file-upload-icon{font-size:1.5rem;margin-bottom:8px;}
+.file-upload-text{font-size:0.78rem;color:var(--muted);}
+.file-upload-name{font-size:0.82rem;color:var(--cyan);font-weight:600;margin-top:4px;}
+.input-footer-row{display:flex;align-items:center;justify-content:space-between;margin-top:12px;gap:12px;}
+.analyze-btn{background:linear-gradient(135deg,var(--cyan),var(--purple));color:#000;border:none;font-family:'Inter',sans-serif;font-size:0.75rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;padding:11px 24px;border-radius:9px;cursor:pointer;transition:all 0.18s;display:flex;align-items:center;gap:8px;box-shadow:0 4px 14px rgba(0,229,255,0.2);}
+.analyze-btn:hover{transform:translateY(-1px);}
+.analyze-btn:active{transform:scale(0.97);}
+.analyze-btn:disabled{opacity:0.35;cursor:not-allowed;transform:none;box-shadow:none;}
+.status-badge{font-size:0.65rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);display:flex;align-items:center;gap:6px;}
+.spinner{width:10px;height:10px;border-radius:50%;border:2px solid currentColor;border-top-color:transparent;animation:spin 0.7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+@media(max-width:700px){.sidebar{display:none;}.mode-header{padding:14px 16px;}.result-scroll{padding:16px;}.input-zone{padding:12px 16px 16px;}}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="topbar-logo">LIMITLESS</div>
+  <div class="topbar-badge">🎮 GAME DEV AI</div>
+  <a href="chat.html" class="back-btn">← Back to Chat</a>
+</div>
+<div class="main">
+  <div class="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-section-title" style="color:var(--red);">QA & Testing</div>
+      <button class="mode-btn active" data-mode="qa_stress" onclick="selectMode(this)"><span class="mode-icon">🔴</span><div><div class="mode-name">Bug Killer</div><div class="mode-desc">Stress test & crash finder</div></div></button>
+      <button class="mode-btn" data-mode="qa_performance" onclick="selectMode(this)"><span class="mode-icon">📊</span><div><div class="mode-name">Performance Profiler</div><div class="mode-desc">Memory leaks & FPS drops</div></div></button>
+      <button class="mode-btn" data-mode="qa_visual" onclick="selectMode(this)"><span class="mode-icon">👁️</span><div><div class="mode-name">Visual Regression</div><div class="mode-desc">Detect visual regressions</div></div></button>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-section-title" style="color:var(--gold);">Asset Pipeline</div>
+      <button class="mode-btn" data-mode="lod_generator" onclick="selectMode(this)"><span class="mode-icon">🔺</span><div><div class="mode-name">LOD Generator</div><div class="mode-desc">Auto level-of-detail setup</div></div></button>
+      <button class="mode-btn" data-mode="pbr_material" onclick="selectMode(this)"><span class="mode-icon">🎨</span><div><div class="mode-name">PBR Material Scanner</div><div class="mode-desc">Photo to game texture</div></div></button>
+      <button class="mode-btn" data-mode="mesh_cleaner" onclick="selectMode(this)"><span class="mode-icon">🧹</span><div><div class="mode-name">Mesh Cleaner</div><div class="mode-desc">Fix broken 3D geometry</div></div></button>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-section-title" style="color:var(--green);">Narrative & L10N</div>
+      <button class="mode-btn" data-mode="localization" onclick="selectMode(this)"><span class="mode-icon">🌍</span><div><div class="mode-name">Localization</div><div class="mode-desc">20+ language translation</div></div></button>
+      <button class="mode-btn" data-mode="lip_sync" onclick="selectMode(this)"><span class="mode-icon">👄</span><div><div class="mode-name">AI Lip-Sync</div><div class="mode-desc">Mouth animation data</div></div></button>
+      <button class="mode-btn" data-mode="dialogue_gen" onclick="selectMode(this)"><span class="mode-icon">💬</span><div><div class="mode-name">Dialogue Generator</div><div class="mode-desc">Lore-consistent NPC lines</div></div></button>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-section-title" style="color:var(--cyan);">World Building</div>
+      <button class="mode-btn" data-mode="procedural_landscape" onclick="selectMode(this)"><span class="mode-icon">🌿</span><div><div class="mode-name">Procedural Landscape</div><div class="mode-desc">Generate terrain & cities</div></div></button>
+      <button class="mode-btn" data-mode="collision_mapping" onclick="selectMode(this)"><span class="mode-icon">🧱</span><div><div class="mode-name">Collision Mapping</div><div class="mode-desc">Auto physics boundaries</div></div></button>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-section-title" style="color:var(--purple);">Management</div>
+      <button class="mode-btn" data-mode="manhour_tracker" onclick="selectMode(this)"><span class="mode-icon">💰</span><div><div class="mode-name">Man-Hour Tracker</div><div class="mode-desc">Real-time savings dashboard</div></div></button>
+      <button class="mode-btn" data-mode="legacy_optimizer" onclick="selectMode(this)"><span class="mode-icon">⚡</span><div><div class="mode-name">Legacy Code Optimizer</div><div class="mode-desc">Modernize old C++ code</div></div></button>
+    </div>
+  </div>
+  <div class="content">
+    <div class="mode-header" id="modeHeader">
+      <div class="mode-header-top">
+        <div class="mode-header-icon">🔴</div>
+        <div class="mode-header-title">Bug Killer — Stress Tester</div>
+        <div class="mode-header-badge" style="background:rgba(248,113,113,0.1);border:1px solid rgba(248,113,113,0.3);color:var(--red);">QA</div>
+      </div>
+      <div class="mode-header-desc">Describe your game scenario or paste code to find crashes, memory leaks, and edge cases.</div>
+    </div>
+    <div class="result-scroll" id="resultScroll">
+      <div class="empty-state" id="emptyState">
+        <div class="empty-icon">🎮</div>
+        <div class="empty-title">Ready to analyze</div>
+        <div class="empty-desc">Select a mode from the sidebar, enter your input below, then click Analyze.</div>
+      </div>
+      <div id="resultContainer"></div>
+    </div>
+    <div class="input-zone">
+      <div class="input-tabs" id="inputTabs">
+        <button class="input-tab active" id="tab-text-btn" onclick="switchTab('text',this)">📝 Text</button>
+        <button class="input-tab" id="tab-code-btn" onclick="switchTab('code',this)">💻 Code</button>
+        <button class="input-tab" id="tab-file-btn" onclick="switchTab('file',this)">📁 Upload</button>
+      </div>
+      <div class="input-panel active" id="tab-text">
+        <textarea class="game-input" id="textInput" placeholder="Describe your game scenario, asset, or what you need analyzed…"></textarea>
+      </div>
+      <div class="input-panel" id="tab-code">
+        <textarea class="game-input code-font" id="codeInput" placeholder="Paste your C++, C#, Python, HLSL, or any game code here…"></textarea>
+      </div>
+      <div class="input-panel" id="tab-file">
+        <div class="file-upload-area" id="fileUploadArea" onclick="document.getElementById('fileUploadInput').click()">
+          <div class="file-upload-icon">📁</div>
+          <div class="file-upload-text">Click to upload image or file</div>
+          <div class="file-upload-name" id="fileUploadName"></div>
+        </div>
+        <input type="file" id="fileUploadInput" accept="image/*,.txt,.cpp,.cs,.py,.glsl,.hlsl" style="display:none" onchange="handleFileUpload(this)">
+        <textarea class="game-input" id="fileQuestion" placeholder="What would you like to know? (optional)" style="margin-top:10px;height:60px;"></textarea>
+      </div>
+      <div class="input-footer-row">
+        <div class="status-badge" id="statusBadge"></div>
+        <button class="analyze-btn" id="analyzeBtn" onclick="analyze()">
+          <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+          Analyze
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+const sb=supabase.createClient('https://hkblyysckxlbedxklqwm.supabase.co','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhrYmx5eXNja3hsYmVkeGtscXdtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUzNzgwMjcsImV4cCI6MjA5MDk1NDAyN30.MiqQC9MojHMImboewzLhMdi-ccqI5ru-EtdyhSmaCic');
+(async()=>{const{data:{session}}=await sb.auth.getSession();if(!session)window.location.href='/app/login.html';})();
+
+let currentMode='qa_stress',uploadedFile=null,activeTab='text',busy=false;
+
+const MODE_META={
+  qa_stress:{icon:'🔴',title:'Bug Killer — Stress Tester',badge:'QA',badgeColor:'var(--red)',badgeBg:'rgba(248,113,113,0.1)',badgeBorder:'rgba(248,113,113,0.3)',desc:'Describe your game scenario or paste code to find crashes, memory leaks, out-of-bounds errors and edge cases.',defaultTab:'text'},
+  qa_performance:{icon:'📊',title:'Performance Profiler',badge:'QA',badgeColor:'var(--orange)',badgeBg:'rgba(251,146,60,0.1)',badgeBorder:'rgba(251,146,60,0.3)',desc:'Paste code or describe your game to find FPS drops, memory issues, and PS5 vs PC bottlenecks.',defaultTab:'code'},
+  qa_visual:{icon:'👁️',title:'Visual Regression Tester',badge:'QA',badgeColor:'var(--pink)',badgeBg:'rgba(244,114,182,0.1)',badgeBorder:'rgba(244,114,182,0.3)',desc:'Upload a screenshot to detect visual regressions, lighting issues, and rendering glitches.',defaultTab:'file'},
+  lod_generator:{icon:'🔺',title:'LOD Generator',badge:'ASSET',badgeColor:'var(--gold)',badgeBg:'rgba(251,191,36,0.1)',badgeBorder:'rgba(251,191,36,0.3)',desc:'Describe your 3D model (poly count, engine, type) to get a complete LOD breakdown with distance thresholds.',defaultTab:'text'},
+  pbr_material:{icon:'🎨',title:'PBR Material Scanner',badge:'ASSET',badgeColor:'var(--gold)',badgeBg:'rgba(251,191,36,0.1)',badgeBorder:'rgba(251,191,36,0.3)',desc:'Upload a photo or describe a material to get a full PBR setup with node graph and optimization tips.',defaultTab:'file'},
+  mesh_cleaner:{icon:'🧹',title:'Mesh Cleaner',badge:'ASSET',badgeColor:'var(--gold)',badgeBg:'rgba(251,191,36,0.1)',badgeBorder:'rgba(251,191,36,0.3)',desc:'Describe your 3D mesh issues to get step-by-step repair instructions and cleanup scripts.',defaultTab:'text'},
+  localization:{icon:'🌍',title:'Zero-Cost Localization',badge:'NARRATIVE',badgeColor:'var(--green)',badgeBg:'rgba(34,211,160,0.1)',badgeBorder:'rgba(34,211,160,0.3)',desc:'Paste your game text or UI strings to get instant translations into 20+ languages in a clean table.',defaultTab:'text'},
+  lip_sync:{icon:'👄',title:'AI Lip-Sync Generator',badge:'NARRATIVE',badgeColor:'var(--green)',badgeBg:'rgba(34,211,160,0.1)',badgeBorder:'rgba(34,211,160,0.3)',desc:'Enter your dialogue text and language to get phoneme breakdowns, viseme shapes, and engine implementation code.',defaultTab:'text'},
+  dialogue_gen:{icon:'💬',title:'Lore Dialogue Generator',badge:'NARRATIVE',badgeColor:'var(--green)',badgeBg:'rgba(34,211,160,0.1)',badgeBorder:'rgba(34,211,160,0.3)',desc:'Describe your game world, lore, and NPC to generate contextually accurate dialogue with voice direction notes.',defaultTab:'text'},
+  procedural_landscape:{icon:'🌿',title:'Procedural Landscape Brush',badge:'WORLD',badgeColor:'var(--cyan)',badgeBg:'rgba(0,229,255,0.1)',badgeBorder:'rgba(0,229,255,0.3)',desc:'Describe your biome or environment to get procedural generation parameters and engine-specific code.',defaultTab:'text'},
+  collision_mapping:{icon:'🧱',title:'Auto-Collision Mapper',badge:'WORLD',badgeColor:'var(--cyan)',badgeBg:'rgba(0,229,255,0.1)',badgeBorder:'rgba(0,229,255,0.3)',desc:'Describe your game objects to get collision primitive recommendations, layer setup, and batch generation scripts.',defaultTab:'text'},
+  manhour_tracker:{icon:'💰',title:'Man-Hour Savings Tracker',badge:'MANAGE',badgeColor:'var(--purple)',badgeBg:'rgba(168,85,247,0.1)',badgeBorder:'rgba(168,85,247,0.3)',desc:'Describe a completed task to get hours saved, cost savings vs manual work, and ROI percentage.',defaultTab:'text'},
+  legacy_optimizer:{icon:'⚡',title:'Legacy Code Optimizer',badge:'MANAGE',badgeColor:'var(--purple)',badgeBg:'rgba(168,85,247,0.1)',badgeBorder:'rgba(168,85,247,0.3)',desc:'Paste your old C++ code to get modern C++17/20 rewrites with performance improvements and memory modernization.',defaultTab:'code'},
+};
+
+function selectMode(btn){
+  // Update active button
+  document.querySelectorAll('.mode-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  currentMode=btn.dataset.mode;
+  const meta=MODE_META[currentMode];
+  if(!meta)return;
+
+  // Update header
+  document.getElementById('modeHeader').innerHTML=`
+    <div class="mode-header-top">
+      <div class="mode-header-icon">${meta.icon}</div>
+      <div class="mode-header-title">${meta.title}</div>
+      <div class="mode-header-badge" style="background:${meta.badgeBg};border:1px solid ${meta.badgeBorder};color:${meta.badgeColor};">${meta.badge}</div>
+    </div>
+    <div class="mode-header-desc">${meta.desc}</div>`;
+
+  // Clear results
+  document.getElementById('emptyState').style.display='flex';
+  document.getElementById('resultContainer').innerHTML='';
+
+  // Clear all inputs
+  document.getElementById('textInput').value='';
+  document.getElementById('codeInput').value='';
+  document.getElementById('fileQuestion').value='';
+  uploadedFile=null;
+  document.getElementById('fileUploadArea').classList.remove('has-file');
+  document.getElementById('fileUploadName').textContent='';
+
+  // Switch to default tab for this mode
+  const defaultTab=meta.defaultTab||'text';
+  const tabBtnMap={text:document.getElementById('tab-text-btn'),code:document.getElementById('tab-code-btn'),file:document.getElementById('tab-file-btn')};
+  switchTab(defaultTab,tabBtnMap[defaultTab]);
+}
+
+function switchTab(tab,btn){
+  activeTab=tab;
+  document.querySelectorAll('.input-tab').forEach(b=>b.classList.remove('active'));
+  if(btn)btn.classList.add('active');
+  document.querySelectorAll('.input-panel').forEach(p=>p.classList.remove('active'));
+  const panel=document.getElementById('tab-'+tab);
+  if(panel)panel.classList.add('active');
+}
+
+function handleFileUpload(input){
+  const file=input.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    uploadedFile={b64:e.target.result.split(',')[1],type:file.type,name:file.name};
+    document.getElementById('fileUploadArea').classList.add('has-file');
+    document.getElementById('fileUploadName').textContent='✓ '+file.name;
+  };
+  reader.readAsDataURL(file);
+  input.value='';
+}
+
+function setStatus(text){
+  const el=document.getElementById('statusBadge');
+  el.innerHTML=text?`<div class="spinner"></div>${text}`:'';
+}
+
+function escHtml(t){if(!t)return'';return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+function formatText(raw){
+  if(!raw)return'';
+  raw=raw.replace(/```(\w*)\n?([\s\S]*?)```/g,(_,l,c)=>`<pre><code>${escHtml(c.trim())}</code></pre>`);
+  raw=raw.replace(/`([^`\n]+)`/g,'<code>$1</code>');
+  raw=raw.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>');
+  raw=raw.replace(/\*(.+?)\*/g,'<em>$1</em>');
+  raw=raw.replace(/^### (.+)$/gm,'<h3>$1</h3>');
+  raw=raw.replace(/^## (.+)$/gm,'<h2>$1</h2>');
+  raw=raw.replace(/^# (.+)$/gm,'<h1>$1</h1>');
+  raw=raw.replace(/^[\*\-] (.+)$/gm,'<li>$1</li>');
+  raw=raw.replace(/(<li>[\s\S]*?<\/li>)+/g,s=>`<ul>${s}</ul>`);
+  raw=raw.replace(/^\d+\. (.+)$/gm,'<li>$1</li>');
+  raw=raw.replace(/\n\n/g,'</p><p>').replace(/\n/g,'<br>');
+  return raw;
+}
+
+async function analyze(){
+  if(busy)return;
+  const textInput=document.getElementById('textInput').value.trim();
+  const codeInput=document.getElementById('codeInput').value.trim();
+  const fileQuestion=document.getElementById('fileQuestion').value.trim();
+  let input='',code='';
+
+  if(activeTab==='text')input=textInput;
+  else if(activeTab==='code'){code=codeInput;input=codeInput;}
+  else if(activeTab==='file')input=fileQuestion||'Analyze this.';
+
+  if(!input&&!code&&!uploadedFile){alert('Please enter a description, paste code, or upload a file.');return;}
+
+  busy=true;
+  document.getElementById('analyzeBtn').disabled=true;
+  document.getElementById('emptyState').style.display='none';
+  setStatus('Analyzing with AI…');
+
+  const body={mode:currentMode,input:input||'Analyze this.',code:code||undefined};
+  if(uploadedFile&&activeTab==='file'){body.imageData=uploadedFile.b64;body.imageType=uploadedFile.type;}
+
+  try{
+    const res=await fetch('/api/gamedev',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    if(!res.ok){const e=await res.json();throw new Error(e.error||'Analysis failed');}
+    const data=await res.json();
+    const meta=MODE_META[currentMode];
+    document.getElementById('resultContainer').innerHTML=`
+      <div class="result-card">
+        <div class="result-label">${meta?.icon} ${meta?.title} — Result</div>
+        <div class="result-text">${formatText(data.text)}</div>
+        <button class="copy-result-btn" onclick="copyResult(this,${JSON.stringify(data.text)})">📋 Copy Result</button>
+      </div>`;
+    document.getElementById('resultScroll').scrollTo({top:0,behavior:'smooth'});
+  }catch(e){
+    document.getElementById('resultContainer').innerHTML=`<div class="result-card"><div class="result-text" style="color:var(--red);">✗ ${e.message||'Something went wrong. Please try again.'}</div></div>`;
+  }
+  setStatus('');
+  busy=false;
+  document.getElementById('analyzeBtn').disabled=false;
+}
+
+function copyResult(btn,text){
+  navigator.clipboard.writeText(text).then(()=>{btn.textContent='✓ Copied!';setTimeout(()=>btn.innerHTML='📋 Copy Result',2000);});
+}
+</script>
+</body>
+</html>
