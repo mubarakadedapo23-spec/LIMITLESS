@@ -17,14 +17,26 @@ async function getSupabase(){const{createClient}=await import('@supabase/supabas
 async function geminiChat(messages,system){
   const contents=messages.map(m=>({role:m.role==='assistant'?'model':'user',parts:[{text:typeof m.content==='string'?m.content:JSON.stringify(m.content)}]}));
   const body={system_instruction:system?{parts:[{text:system}]}:undefined,contents,generationConfig:{temperature:0.7,maxOutputTokens:8192,topP:0.95},safetySettings:[{category:'HARM_CATEGORY_HARASSMENT',threshold:'BLOCK_NONE'},{category:'HARM_CATEGORY_HATE_SPEECH',threshold:'BLOCK_NONE'},{category:'HARM_CATEGORY_SEXUALLY_EXPLICIT',threshold:'BLOCK_MEDIUM_AND_ABOVE'},{category:'HARM_CATEGORY_DANGEROUS_CONTENT',threshold:'BLOCK_NONE'}]};
-  const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${GEMINI_KEY}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_KEY}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
   if(!r.ok){console.error('Gemini error',await r.text());return await groqFallback(messages,system);}
   const d=await r.json();
   return d.candidates?.[0]?.content?.parts?.[0]?.text||'—';
 }
 
-async function geminiVision(imageData,imageType,question){
-  const body={contents:[{parts:[{inline_data:{mime_type:imageType,data:imageData}},{text:question||'Analyze this image in thorough detail.'}]}],generationConfig:{temperature:0.4,maxOutputTokens:4096}};
+async function geminiVision(imageData, imageType, question) {
+  const q = question || 'Analyze this image in thorough detail. Describe everything you see.';
+  const body = { contents: [{ parts: [{ text: q }, { inline_data: { mime_type: imageType, data: imageData } }] }], generationConfig: { temperature: 0.4, maxOutputTokens: 4096 } };
+  try {
+    const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_KEY}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    const d = await r.json();
+    const text = d.candidates?.[0]?.content?.parts?.[0]?.text;
+    return text;
+  } catch (e) {
+    const r2 = await fetch('https://api.groq.com/openai/v1/chat/completions', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${GROQ_KEY}` }, body: JSON.stringify({ model: 'llama-3.2-11b-vision-preview', messages: [{ role: 'user', content: [{ type: 'image_url', image_url: { url: `data:${imageType};base64,${imageData}` } }, { type: 'text', text: q }] }], max_tokens: 2000 }) });
+    const d2 = await r2.json();
+    return d2.choices?.[0]?.message?.content || 'Vision analysis failed.';
+  }
+}},{text:question||'Analyze this image in thorough detail.'}]}],generationConfig:{temperature:0.4,maxOutputTokens:4096}};
   const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${GEMINI_KEY}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
   if(!r.ok)throw new Error('Vision failed');
   const d=await r.json();return d.candidates?.[0]?.content?.parts?.[0]?.text||'—';
