@@ -85,7 +85,7 @@ export default async function handler(req,res){
         if(result){searchedWeb=true;searchContext=`\n\n=== LIVE WEB SEARCH RESULTS (Tavily) ===\nQuery: "${lastText}"\nDate: ${new Date().toDateString()}\n\n${result}\n=== END RESULTS ===\n\nYou just searched the web. Use these results to answer accurately. Cite sources. Do NOT say you lack internet access.`;}
       }
       const baseSystem=system||`You are LIMITLESS — an extraordinarily intelligent AI assistant. Helpful, direct, thorough. Use markdown. Today is ${new Date().toDateString()}.`;
-      const text=await geminiChat(messages,baseSystem+searchContext);
+      const text=await geminiChat(messages,baseSystem+searchContext).catch(()=>groqFallback(messages,baseSystem+searchContext));
       return res.status(200).json({text,searchedWeb});
     }catch(e){return res.status(500).json({error:e.message||'Chat failed'});}
   }
