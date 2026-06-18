@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<meta name="theme-color" content="#030308">
+<title>Pricing — LIMITLESS</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{--bg:#030308;--bg2:#06060e;--surface:#0d0d1a;--surface2:#111120;--border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.12);--text:#e8e8f4;--text2:#b0b0c8;--muted:#555570;--cyan:#00e5ff;--purple:#a855f7;--pink:#f472b6;--green:#22d3a0;--orange:#fb923c;--red:#f87171;--gold:#fbbf24;}
+html,body{min-height:100%;}
+body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;background-image:linear-gradient(rgba(0,229,255,0.018) 1px,transparent 1px),linear-gradient(90deg,rgba(0,229,255,0.018) 1px,transparent 1px);background-size:44px 44px;}
+.topbar{position:relative;z-index:10;display:flex;align-items:center;justify-content:space-between;padding:18px 32px;border-bottom:1px solid var(--border);background:rgba(3,3,8,0.85);backdrop-filter:blur(20px);}
+.topbar-logo{font-family:'Syne',sans-serif;font-size:1rem;font-weight:800;letter-spacing:0.22em;background:linear-gradient(90deg,var(--cyan),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.back-link{font-size:0.8rem;color:var(--muted);text-decoration:none;display:flex;align-items:center;gap:6px;transition:color 0.15s;}
+.back-link:hover{color:var(--text);}
+.wrap{position:relative;z-index:1;max-width:1020px;margin:0 auto;padding:64px 24px 80px;}
+.head{text-align:center;margin-bottom:52px;}
+.head-eyebrow{font-size:0.68rem;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:var(--cyan);margin-bottom:14px;}
+.head h1{font-family:'Syne',sans-serif;font-size:clamp(1.9rem,4.5vw,2.7rem);font-weight:800;line-height:1.15;margin-bottom:14px;}
+.head h1 span{background:linear-gradient(135deg,var(--cyan),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.head p{color:var(--muted);font-size:0.95rem;max-width:460px;margin:0 auto;line-height:1.7;}
+.plans{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;}
+@media(max-width:860px){.plans{grid-template-columns:1fr;max-width:420px;margin:0 auto;}}
+.plan{background:var(--surface);border:1px solid var(--border2);border-radius:18px;padding:30px 26px;display:flex;flex-direction:column;position:relative;transition:transform 0.2s,border-color 0.2s;}
+.plan:hover{transform:translateY(-3px);}
+.plan.featured{border-color:rgba(0,229,255,0.35);background:linear-gradient(180deg,rgba(0,229,255,0.05),var(--surface) 40%);}
+.plan-badge{position:absolute;top:-12px;right:24px;background:linear-gradient(135deg,var(--cyan),var(--purple));color:#000;font-size:0.6rem;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;padding:5px 14px;border-radius:100px;}
+.plan-name{font-family:'Syne',sans-serif;font-size:1.15rem;font-weight:800;margin-bottom:6px;}
+.plan-desc{font-size:0.8rem;color:var(--muted);margin-bottom:22px;line-height:1.5;min-height:34px;}
+.plan-price{display:flex;align-items:flex-end;gap:5px;margin-bottom:26px;}
+.plan-price .amt{font-family:'Syne',sans-serif;font-size:2.6rem;font-weight:800;line-height:1;}
+.plan-price .per{font-size:0.85rem;color:var(--muted);padding-bottom:6px;}
+.plan-feats{list-style:none;display:flex;flex-direction:column;gap:11px;margin-bottom:28px;flex:1;}
+.plan-feats li{display:flex;align-items:flex-start;gap:9px;font-size:0.83rem;color:var(--text2);line-height:1.5;}
+.plan-feats li svg{flex-shrink:0;margin-top:2px;width:14px;height:14px;color:var(--green);}
+.plan-btn{width:100%;padding:12px;border-radius:10px;font-family:'Inter',sans-serif;font-size:0.85rem;font-weight:700;cursor:pointer;border:none;text-align:center;transition:all 0.18s;}
+.plan-btn.primary{background:linear-gradient(135deg,var(--cyan),var(--purple));color:#000;box-shadow:0 4px 14px rgba(0,229,255,0.2);}
+.plan-btn.primary:hover{transform:translateY(-1px);}
+.plan-btn.secondary{background:rgba(255,255,255,0.05);color:var(--text);border:1px solid var(--border2);}
+.plan-btn.secondary:hover{background:rgba(255,255,255,0.08);}
+.plan-btn:disabled{opacity:0.5;cursor:not-allowed;transform:none;}
+.current-tag{display:inline-flex;align-items:center;gap:6px;font-size:0.7rem;color:var(--green);font-weight:600;justify-content:center;padding:11px;}
+.foot-note{text-align:center;margin-top:44px;font-size:0.78rem;color:var(--muted);line-height:1.7;}
+.foot-note a{color:var(--cyan);text-decoration:none;}
+.error-msg{max-width:480px;margin:0 auto 28px;background:rgba(248,113,113,0.1);border:1px solid rgba(248,113,113,0.3);color:var(--red);padding:11px 16px;border-radius:10px;font-size:0.82rem;text-align:center;display:none;}
+.error-msg.show{display:block;}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="topbar-logo">LIMITLESS</div>
+  <a href="chat.html" class="back-link">← Back to chat</a>
+</div>
+
+<div class="wrap">
+  <div class="head">
+    <div class="head-eyebrow">Pricing</div>
+    <h1>Choose your <span>plan</span></h1>
+    <p>Start free, upgrade any time. All plans include access to chat, image generation, code, vision, files, live search, and voice.</p>
+  </div>
+
+  <div class="error-msg" id="errorMsg"></div>
+
+  <div class="plans">
+    <div class="plan" id="planFree">
+      <div class="plan-name">Free</div>
+      <div class="plan-desc">For trying out LIMITLESS</div>
+      <div class="plan-price"><span class="amt">$0</span><span class="per">/month</span></div>
+      <ul class="plan-feats">
+        <li><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>20 messages per day</li>
+        <li><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>3 images per day</li>
+        <li><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>Voice & file uploads</li>
+        <li><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>Live web search</li>
+      </ul>
+      <button class="plan-btn secondary" id="btnFree" onclick="selectFree()">Get started</button>
+    </div>
+
+    <div class="plan featured" id="planPro">
+      <div class="plan-badge">Most popular</div>
+      <div class="plan-name">Pro</div>
+      <div class="plan-desc">For everyday power users</div>
+      <div class="plan-price"><span class="amt">$15</span><span class="per">/month</span></div>
+      <ul class="plan-feats">
+        <li><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>1,000 messages per day</li>
+        <li><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>50 images per day</li>
+        <li><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>Priority response speed</li>
+        <li><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>Full conversation history</li>
+        <li><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>Voice & file uploads</li>
+      </ul>
+      <button class="plan-btn primary" id="btnPro" onclick="subscribe('pro')">Upgrade to Pro →</button>
+    </div>
+
+    <div class="plan" id="planEnterprise">
+      <div class="plan-name">Enterprise</div>
+      <div class="plan-desc">For teams and heavy usage</div>
+      <div class="plan-price"><span class="amt">$49</span><span class="per">/month</span></div>
+      <ul class="plan-feats">
+        <li><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>Unlimited messages</li>
+        <li><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>Unlimited images</li>
+        <li><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>Highest priority speed</li>
+        <li><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>Full conversation history</li>
+        <li><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>Voice & file uploads</li>
+      </ul>
+      <button class="plan-btn secondary" id="btnEnterprise" onclick="subscribe('enterprise')">Upgrade to Enterprise →</button>
+    </div>
+  </div>
+
+  <div class="foot-note">Payments are securely processed by Paystack. Cancel any time from settings. Need help? Reach out from the chat support.<br><a href="terms.html">Terms</a> · <a href="privacy.html">Privacy</a></div>
+</div>
+
+<script>
+const SUPABASE_URL='https://hkblyysckxlbedxklqwm.supabase.co';
+const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhrYmx5eXNja3hsYmVkeGtscXdtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUzNzgwMjcsImV4cCI6MjA5MDk1NDAyN30.MiqQC9MojHMImboewzLhMdi-ccqI5ru-EtdyhSmaCic';
+const{createClient}=supabase;const sb=createClient(SUPABASE_URL,SUPABASE_KEY);
+
+let currentUser=null;
+let currentPlan='free';
+
+function showError(msg){
+  const el=document.getElementById('errorMsg');
+  el.textContent=msg;
+  el.classList.add('show');
+}
+
+async function init(){
+  const{data:{session}}=await sb.auth.getSession();
+  if(!session){
+    window.location.href='login.html';
+    return;
+  }
+  currentUser=session.user;
+
+  try{
+    const res=await fetch('/api/userplan',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({userId:currentUser.id})});
+    const data=await res.json();
+    currentPlan=data.plan||'free';
+    markCurrentPlan(currentPlan);
+  }catch(e){
+    // If plan fetch fails, just leave buttons as default — don't block the page
+  }
+}
+
+function markCurrentPlan(plan){
+  const map={free:'btnFree',pro:'btnPro',enterprise:'btnEnterprise'};
+  const btnId=map[plan];
+  if(!btnId)return;
+  const btn=document.getElementById(btnId);
+  if(!btn)return;
+  btn.outerHTML='<div class="current-tag">✓ Your current plan</div>';
+}
+
+function selectFree(){
+  window.location.href='chat.html';
+}
+
+async function subscribe(plan){
+  if(plan===currentPlan)return;
+  const btnId=plan==='pro'?'btnPro':'btnEnterprise';
+  const btn=document.getElementById(btnId);
+  const originalText=btn.textContent;
+  btn.disabled=true;
+  btn.textContent='Redirecting…';
+
+  try{
+    const res=await fetch('/api/subscribe',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({email:currentUser.email,plan,userId:currentUser.id})
+    });
+    if(!res.ok){
+      const err=await res.json();
+      throw new Error(err.error||'Could not start checkout');
+    }
+    const data=await res.json();
+    if(data.authorizationUrl){
+      window.location.href=data.authorizationUrl;
+    }else{
+      throw new Error('No checkout URL returned');
+    }
+  }catch(e){
+    showError(e.message||'Something went wrong starting checkout. Please try again.');
+    btn.disabled=false;
+    btn.textContent=originalText;
+  }
+}
+
+init();
+</script>
+</body>
+</html>
