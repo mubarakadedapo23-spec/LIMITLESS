@@ -25,7 +25,7 @@ async function groqVision(imageData,imageType,question){
     method:'POST',
     headers:{'Content-Type':'application/json','Authorization':`Bearer ${GROQ_KEY}`},
     body:JSON.stringify({
-      model:'llama-3.2-11b-vision-preview',
+      model:'meta-llama/llama-4-scout-17b-16e-instruct',
       messages:[{role:'user',content:[
         {type:'image_url',image_url:{url:`data:${imageType};base64,${imageData}`}},
         {type:'text',text:question||'Analyze this image in thorough detail. Describe everything you see — objects, text, colors, composition, and any notable details.'}
