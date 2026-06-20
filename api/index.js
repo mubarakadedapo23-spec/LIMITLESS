@@ -158,7 +158,7 @@ export default async function handler(req,res){
   if(path==='/api/vision'&&req.method==='POST'){
     const{imageData,imageType,question}=req.body;if(!imageData)return res.status(400).json({error:'Image required'});
     try{const text=await groqVision(imageData,imageType,question);return res.status(200).json({text});}
-    catch{return res.status(500).json({error:'Vision failed'});}
+    catch(e){console.error('Vision error:',e.message);return res.status(500).json({error:e.message||'Vision failed'});}
   }
 
   // ── SUBSCRIBE ──
