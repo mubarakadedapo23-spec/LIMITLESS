@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>LIMITLESS</title>
+<meta name="theme-color" content="#0a0505">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:#0a0505;display:flex;align-items:center;justify-content:center;min-height:100vh;font-family:'Inter',sans-serif;}
+.splash{text-align:center;}
+.logo{font-size:1.4rem;font-weight:800;letter-spacing:0.2em;color:#f4e8e8;margin-bottom:16px;}
+.logo span{color:#ff4d4d;}
+.bar{width:48px;height:2px;background:linear-gradient(90deg,#ff4d4d,#b91c1c);margin:0 auto;border-radius:2px;animation:load 0.8s ease forwards;}
+@keyframes load{from{width:0;opacity:0;}to{width:48px;opacity:1;}}
+</style>
+</head>
+<body>
+<div class="splash">
+  <div class="logo"><span>∞</span> LIMITLESS</div>
+  <div class="bar"></div>
+</div>
+<script>
+// Redirect straight to chat — auth is handled inside chat.html
+window.location.replace('/app/chat.html');
+</script>
+</body>
+</html>
