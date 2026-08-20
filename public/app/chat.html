@@ -320,6 +320,8 @@ let user=null,userName='',chatHistory=[],convId=null,mode='chat',pendingFile=nul
 let mediaRecorder=null,audioChunks=[],recTimer=null,recSecs=0;
 let settings={voice:'Rachel',voiceOutput:true,autoScroll:true,enterSend:false,compact:false,theme:'dark'};
 function cleanErrMsg(msg){const m=(msg||'').toLowerCase();if(m.includes('rate limit')||m.includes('quota'))return'LIMITLESS is handling high demand — please try again in a moment.';if(m.includes('api key')||m.includes('auth'))return'A configuration issue occurred. Please try again.';if(m.includes('timeout'))return'Response took too long — please try again.';return'Something went wrong — please try again.';}
+
+function needsSearchClient(text){const l=text.toLowerCase();return['today','tonight','latest','recent','breaking','news','price','score','weather','stock','crypto','who is','what is happening','2025','2026','2027','election','president','match','won','lost','released','launched','trending','live'].some(k=>l.includes(k));}
 const MODES={chat:{label:'CHAT',color:'#ff4d4d',hint:'Message LIMITLESS…'},imagine:{label:'IMAGE GEN',color:'#b91c1c',hint:'Describe an image…'},edit:{label:'EDIT IMG',color:'#f47272',hint:'Upload image then describe edit…'},code:{label:'CODE',color:'#22d3a0',hint:'Write or debug code…'},vision:{label:'VISION',color:'#f47272',hint:'Upload image and ask about it…'},files:{label:'FILES',color:'#fb923c',hint:'Upload a file…'},search:{label:'SEARCH',color:'#22d3a0',hint:'Ask about current events…'},analyze:{label:'ANALYZE',color:'#b91c1c',hint:'Give me any topic…'},write:{label:'WRITE',color:'#ff4d4d',hint:'Describe an essay…'},calc:{label:'CALC',color:'#22d3a0',hint:'Enter a math problem…'},voice:{label:'VOICE',color:'#fbbf24',hint:'Hold mic button to speak…'}};
 
 const messagesEl=document.getElementById('messages'),inputEl=document.getElementById('msgInput'),chatScroll=document.getElementById('chatScroll');
@@ -501,6 +503,52 @@ async function sendMessage(){
   hideWelcome();busy=true;document.getElementById('sendBtn').disabled=true;
   const userText=text,file=pendingFile;
   const curMode=file?(file.isImg?'vision':'files'):mode;
+
+  // ── INTENT DETECTION — mode doesn't limit what LIMITLESS can do ──
+  function wantsImage(text){
+    const l=text.toLowerCase();
+    return['generate an image','create an image','make an image','draw me','paint me','show me a picture','design me','render me','visualize','generate a photo','create a photo','make a photo','imagine','picture of','image of','illustration of'].some(k=>l.includes(k));
+  }
+  function wantsChat(text){
+    const l=text.toLowerCase();
+    return['what is','who is','how do','why does','explain','tell me','help me','write','calculate','code','analyze','search','what are','can you','could you','what should','how can'].some(k=>l.startsWith(k)||l.includes(k));
+  }
+  // Auto-switch: chat mode + image request → generate image
+  if(curMode==='chat'&&userText&&wantsImage(userText)){
+    setModeOnly('imagine');
+    const effectiveMode='imagine';
+    appendStatus('Generating image…','s-img');
+    try{
+      const res=await fetch('/api/imagine',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt:userText})});
+      removeStatus();if(!res.ok)throw new Error((await res.json()).error||'Failed');
+      const data=await res.json();
+      chatHistory.push({role:'user',content:userText});
+      chatHistory.push({role:'assistant',content:`[Generated: ${userText}]`});
+      appendImgRow(data.url,userText,false);
+      await saveMsg('assistant','[Generated image]',effectiveMode,data.url);
+    }catch(e){removeStatus();appendAIRow(`<span class="err-text">✗ ${e.message||'Image generation failed'}</span>`,null,false,'');}
+    busy=false;document.getElementById('sendBtn').disabled=false;inputEl.focus();return;
+  }
+  // Auto-switch: image mode + chat message → answer as chat
+  if(curMode==='imagine'&&userText&&!wantsImage(userText)&&wantsChat(userText)){
+    // Fall through to chat — treat as normal chat message
+    chatHistory.push({role:'user',content:userText});
+    const useSearch=needsSearchClient(userText);
+    if(useSearch)appendStatus('Searching the web…','s-web');else appendTyping();
+    try{
+      const streamRes=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:chatHistory,mode:'chat',userName,userId:user?.id})});
+      removeStatus();
+      if(!streamRes.ok){const e=await streamRes.json();throw new Error(e.error||`Error ${streamRes.status}`);}
+      const aiRow=appendAIRowStreaming('chat');
+      const reader=streamRes.body.getReader();const decoder=new TextDecoder();
+      let buffer='',fullText='';
+      while(true){const{done,value}=await reader.read();if(done)break;buffer+=decoder.decode(value,{stream:true});const lines=buffer.split('\n');buffer=lines.pop()||'';for(const line of lines){if(!line.startsWith('data: '))continue;const data=line.slice(6).trim();if(data==='[DONE]')continue;try{const j=JSON.parse(data);if(j.chunk){fullText+=j.chunk;updateStreamingRow(aiRow,fullText);}}catch{}}}
+      finalizeStreamingRow(aiRow,fullText,'chat');
+      chatHistory.push({role:'assistant',content:fullText});
+      await saveMsg('assistant',fullText,'chat');
+    }catch(e){removeStatus();appendAIRow(`<span class="err-text">✗ ${cleanErrMsg(e.message)}</span>`,null,false,'');chatHistory.pop();}
+    busy=false;document.getElementById('sendBtn').disabled=false;inputEl.focus();return;
+  }
   inputEl.value='';inputEl.style.height='auto';document.getElementById('charCt')&&(document.getElementById('charCt').textContent='');removePending();
   const imgSrc=file?.isImg?`data:${file.type};base64,${file.b64}`:null;
   appendUserRow(userText,imgSrc);await saveMsg('user',userText,curMode,imgSrc);
